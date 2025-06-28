@@ -833,27 +833,26 @@ class UTBotScanner {
         }
     }
 
-    updatePriceDisplay(prices) {
-        [...this.signals.buy, ...this.signals.sell].forEach(signal => {
-            const currentPrice = prices[signal.symbol];
-            if (!currentPrice) return;
+   updatePriceDisplay(prices) {
+    [...this.signals.buy, ...this.signals.sell].forEach(signal => {
+        const currentPrice = prices[signal.symbol];
+        if (!currentPrice) return;
+        
+        const currentPriceEl = document.getElementById(`current-${signal.id}`);
+        const changeEl = document.getElementById(`change-${signal.id}`);
+        
+        if (currentPriceEl && changeEl) {
+            currentPriceEl.textContent = `$${currentPrice.toFixed(6)}`;
             
-            const currentPriceEl = document.getElementById(`current-${signal.id}`);
-            const changeEl = document.getElementById(`change-${signal.id}`);
+            // حساب التغيير الحقيقي
+            const change = ((currentPrice - signal.price) / signal.price) * 100;
+            const changeText = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
             
-            if (currentPriceEl && changeEl) {
-                currentPriceEl.textContent = `$${currentPrice.toFixed(6)}`;
-                
-                // حساب التغيير
-                const change = ((currentPrice - signal.price) / signal.price) * 100;
-                const changeText = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-                
-                changeEl.textContent = changeText;
-                changeEl.className = `price-change ${change >= 0 ? 'profit' : 'loss'}`;
-            }
-        });
-    }
-
+            changeEl.textContent = changeText;
+            changeEl.className = `price-change ${change >= 0 ? 'profit' : 'loss'}`;
+        }
+    });
+}
     updateCounters() {
         // تحديث عدادات الإشارات
         const buyCountEl = document.querySelector('.buy-header .count-badge');
