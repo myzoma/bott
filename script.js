@@ -285,7 +285,7 @@ class UTBotScanner {
     async getCandleData(symbol, interval, limit) {
         try {
             const response = await fetch(
-                `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`
+                `https://api1.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`
             );
             
             if (!response.ok) {
@@ -811,7 +811,7 @@ class UTBotScanner {
         try {
             const symbolsParam = symbols.map(s => `"${s}"`).join(',');
             const response = await fetch(
-                `https://api.binance.com/api/v3/ticker/price?symbols=[${symbolsParam}]`
+                `https://api1.binance.com/api/v3/ticker/price?symbols=[${symbolsParam}]`
             );
             
             if (!response.ok) {
@@ -1363,3 +1363,74 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('🚀 UTBot Scanner تم تشغيله بنجاح');
 });
+// إضافة أنماط CSS للتحسينات الجديدة
+const additionalStyles = `
+    .performance-item {
+        display: flex;
+        justify-content: space-between;
+        margin: 5px 0;
+        padding: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+    
+    .performance-label {
+        color: #bbb;
+        font-size: 0.9em;
+    }
+    
+    .performance-value {
+        color: #4CAF50;
+        font-weight: bold;
+    }
+    
+    .signal-item.new {
+        animation: slideInRight 0.5s ease-out;
+        border-left: 4px solid #4CAF50;
+    }
+    
+    .signal-item.pinned {
+        border-left: 4px solid #FF9800;
+        background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.05));
+    }
+    
+    .btn-action.active {
+        background: #4CAF50;
+        color: white;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .status-display.running {
+        color: #2196F3;
+    }
+    
+    .status-display.completed {
+        color: #4CAF50;
+    }
+    
+    .status-display.error {
+        color: #f44336;
+    }
+    
+    .status-display.stopped {
+        color: #FF9800;
+    }
+`;
+
+// إضافة الأنماط للصفحة
+const styleSheet = document.createElement('style');
+styleSheet.textContent = additionalStyles;
+document.head.appendChild(styleSheet);
+
+// تصدير الفئة للاستخدام الخارجي
+window.UTBotScanner = UTBotScanner;
