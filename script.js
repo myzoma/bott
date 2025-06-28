@@ -1309,18 +1309,50 @@ class UTBotScanner {
         }
     }
 
-    playSuccessSound() {
+       playSuccessSound() {
         try {
-            const audio = new Audio('data:audio/wav;base64,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
-  audio.play().catch(() => {});
-        } catch (error) {}
+            // استخدام صوت بسيط بدلاً من base64 المعقد
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        } catch (error) {
+            // في حالة فشل إنشاء الصوت، لا نفعل شيئاً
+            console.log('تعذر تشغيل الصوت');
+        }
     }
 
     playWarningSound() {
         try {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
-            audio.play().catch(() => {});
-        } catch (error) {}
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(300, audioContext.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.4);
+        } catch (error) {
+            console.log('تعذر تشغيل صوت التحذير');
+        }
     }
 
     // إضافة معلومات حول الأداء
