@@ -720,11 +720,7 @@ class UTBotScanner {
         }, 2000);
     }
 
-    calculateCurrentProfitLoss(signal) {
-        // هذه دالة مؤقتة - في التطبيق الحقيقي نحتاج للسعر الحالي من API
-        const randomChange = (Math.random() - 0.5) * 4; // تغيير عشوائي بين -2% و +2%
-        return randomChange;
-    }
+    
 
     calculateTargetProfit(signal) {
         if (signal.type === 'buy') {
