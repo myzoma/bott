@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTBot Scanner - ماسح الإشارات المتقدم</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <h1>UTBot Scanner</h1>
+                    <span class="version">v2.0</span>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-coins"></i>
+                        <span>العملات: <span id="totalSymbols">0</span></span>
+                    </div>
+                    <div class="stat-item buy">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>شراء: <span id="buyCount">0</span></span>
+                    </div>
+                    <div class="stat-item sell">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>بيع: <span id="sellCount">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="controls-section">
+                <div class="control-group">
+                    <button id="startBtn" class="btn btn-primary">
+                        <i class="fas fa-play"></i>
+                        بدء المسح
+                    </button>
+                    <button id="stopBtn" class="btn btn-secondary" disabled>
+                        <i class="fas fa-stop"></i>
+                        إيقاف المسح
+                    </button>
+                </div>
+                
+                <div class="settings-group">
+                    <div class="setting-item">
+                        <label>
+                            <i class="fas fa-clock"></i>
+                            ATR Period:
+                            <input type="number" id="atrPeriod" value="5" min="3" max="20">
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label>
+                            <i class="fas fa-key"></i>
+                            Key Value:
+                            <input type="number" id="atrMultiplier" value="1.0" min="0.5" max="3.0" step="0.1">
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status-section">
+                <div class="status-display">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="status">جاهز للبدء...</span>
+                </div>
+                <div class="last-update">
+                    <i class="fas fa-sync-alt"></i>
+                    آخر تحديث: <span id="lastUpdate">--:--:--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <div class="info-header">
+                <h3><i class="fas fa-info-circle"></i> معلومات الإعدادات</h3>
+                <button class="toggle-btn" onclick="this.parentElement.parentElement.classList.toggle('collapsed')">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+            </div>
+            <div class="info-content">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>ATR Period:</strong>
+                        <span>فترة حساب متوسط المدى الحقيقي</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Key Value:</strong>
+                        <span>مضاعف الحساسية للإشارات</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>الحساسية:</strong>
+                        <span>مستوى دقة الإشارات</span>
+                    </div>
+                </div>
+                <div class="info-tip">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>نصيحة:</strong> إذا لم تظهر إشارات، جرب زيادة الحساسية إلى "عالية" أو زيادة Key Value إلى 1.5
+                </div>
+            </div>
+        </div>
+
+        <!-- Signals Container -->
+        <div class="signals-container">
+            <div class="signals-section">
+                <div class="section-header buy-header">
+                    <h2>
+                        <i class="fas fa-arrow-up"></i>
+                        إشارات الشراء
+                        <span class="count-badge" id="buySignalsCount">0</span>
+                    </h2>
+                    <div class="section-actions">
+                        <button class="btn-icon" title="تحديث">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn-icon" title="مسح الكل">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="buySignals" class="signals-list"></div>
+            </div>
+
+            <div class="signals-section">
+                <div class="section-header sell-header">
+                    <h2>
+                        <i class="fas fa-arrow-down"></i>
+                        إشارات البيع
+                        <span class="count-badge" id="sellSignalsCount">0</span>
+                    </h2>
+                    <div class="section-actions">
+                        <button class="btn-icon" title="تحديث">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn-icon" title="مسح الكل">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="sellSignals" class="signals-list"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2024 UTBot Scanner - جميع الحقوق محفوظة</p>
+                <div class="footer-links">
+                    <a href="#" title="المساعدة"><i class="fas fa-question-circle"></i></a>
+                    <a href="#" title="الإعدادات"><i class="fas fa-cog"></i></a>
+                    <a href="#" title="حول"><i class="fas fa-info"></i></a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
