@@ -6,7 +6,7 @@ class UTBotScanner {
         this.pinnedSignals = new Set();
         this.signalPrices = new Map();
 this.symbolsFilter = {
-        minVolume: 1000,        // الحد الأدنى للحجم
+        minVolume: 1000,        // الحد الأدنى للحجمل
         minPrice: 0.001,        // الحد الأدنى للسعر
         maxSymbols: 100,        // العدد الأقصى للرموز
         includeStableCoins: false // تضمين العملات المستقرة
