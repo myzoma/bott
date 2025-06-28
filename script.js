@@ -687,108 +687,113 @@ async getTopTradingSymbols(allSymbols, limit = 100) {
         );
     }
 
-    renderSignal(signal, type) {
-        const container = type === 'buy' ? this.buySignalsEl : this.sellSignalsEl;
-        if (!container) return;
-        const currentPrice = await this.getCurrentPrice(signal.symbol);
+   async renderSignal(signal, type) {  // ✅ إضافة async
+    const container = type === 'buy' ? this.buySignalsEl : this.sellSignalsEl;
+    if (!container) return;
+    
+    // الحصول على السعر الحالي والربح/الخسارة
+    const currentPrice = await this.getCurrentPrice(signal.symbol);
     const profitLoss = currentPrice ? 
         await this.calculateCurrentProfitLoss(signal) : 0;
-        const signalEl = document.createElement('div');
-        signalEl.className = `signal-item ${type} new`;
-        signalEl.dataset.signalId = signal.id;
+    
+    const signalEl = document.createElement('div');
+    signalEl.className = `signal-item ${type} new`;
+    signalEl.dataset.signalId = signal.id;
+    
+    // حذف السطر المكرر - كان هناك تعريف مكرر لـ profitLoss
+    // const profitLoss = this.calculateCurrentProfitLoss(signal); // ❌ احذف هذا السطر
+    
+    const timeAgo = this.getTimeAgo(signal.timestamp);
+    
+    signalEl.innerHTML = `
+        <div class="signal-header">
+            <div class="signal-symbol">
+                <i class="fab fa-bitcoin crypto-icon"></i>
+                ${signal.symbol.replace('USDT', '/USDT')}
+            </div>
+            <div class="signal-rank">
+                ${'★'.repeat(signal.rank)}
+            </div>
+        </div>
         
-        const profitLoss = this.calculateCurrentProfitLoss(signal);
-        const timeAgo = this.getTimeAgo(signal.timestamp);
+        <div class="price-section">
+            <div class="signal-price">
+                <span>سعر الإشارة:</span>
+                <span class="price-value">$${signal.price.toFixed(6)}</span>
+            </div>
+            <div class="current-price">
+                <span>السعر الحالي:</span>
+                <span class="price-value" id="current-${signal.id}">$${currentPrice ? currentPrice.toFixed(6) : signal.price.toFixed(6)}</span>
+                <span class="price-change ${profitLoss >= 0 ? 'profit' : 'loss'}" id="change-${signal.id}">
+                    ${profitLoss >= 0 ? '+' : ''}${profitLoss.toFixed(2)}%
+                </span>
+            </div>
+        </div>
         
-        signalEl.innerHTML = `
-            <div class="signal-header">
-                <div class="signal-symbol">
-                    <i class="fab fa-bitcoin crypto-icon"></i>
-                    ${signal.symbol.replace('USDT', '/USDT')}
-                </div>
-                <div class="signal-rank">
-                    ${'★'.repeat(signal.rank)}
-                </div>
+        <div class="targets-section">
+            <div class="signal-target">
+                <strong>الهدف:</strong>
+                <span class="target-value">$${signal.target.toFixed(6)}</span>
+                <span class="profit">+${this.calculateTargetProfit(signal)}%</span>
             </div>
-            
-            <div class="price-section">
-                <div class="signal-price">
-                    <span>سعر الإشارة:</span>
-                    <span class="price-value">$${signal.price.toFixed(6)}</span>
-                </div>
-                <div class="current-price">
-                    <span>السعر الحالي:</span>
-                    <span class="price-value" id="current-${signal.id}">$${signal.price.toFixed(6)}</span>
-                    <span class="price-change ${profitLoss >= 0 ? 'profit' : 'loss'}" id="change-${signal.id}">
-                        ${profitLoss >= 0 ? '+' : ''}${profitLoss.toFixed(2)}%
-                    </span>
-                </div>
+            <div class="signal-stoploss">
+                <strong>وقف الخسارة:</strong>
+                <span class="stoploss-value">$${signal.stopLoss.toFixed(6)}</span>
+                <span class="loss">${this.calculateStopLossRisk(signal)}%</span>
             </div>
-            
-            <div class="targets-section">
-                <div class="signal-target">
-                    <strong>الهدف:</strong>
-                    <span class="target-value">$${signal.target.toFixed(6)}</span>
-                    <span class="profit">+${this.calculateTargetProfit(signal)}%</span>
-                </div>
-                <div class="signal-stoploss">
-                    <strong>وقف الخسارة:</strong>
-                    <span class="stoploss-value">$${signal.stopLoss.toFixed(6)}</span>
-                    <span class="loss">${this.calculateStopLossRisk(signal)}%</span>
-                </div>
-            </div>
-            
-            <div class="signal-details">
-                <div class="signal-strength">
-                    <span class="strength-stars">${'★'.repeat(signal.strength)}${'☆'.repeat(5-signal.strength)}</span>
-                    <span class="strength-text">قوة الإشارة: ${this.getStrengthText(signal.strength)}</span>
-                </div>
-                <div class="signal-indicators">
-                    <span class="rsi">RSI: ${signal.indicators.rsi}</span>
-                    <span class="trend">الاتجاه: ${signal.indicators.trend}</span>
-                    <span class="volume">الحجم: ${signal.indicators.volume}</span>
-                </div>
-            </div>
-            
-            <div class="signal-time">
-                <i class="fas fa-clock"></i>
-                <span>${timeAgo}</span>
-            </div>
-            
-            <div class="signal-actions">
-                <button class="btn-action btn-trade" onclick="window.open('https://www.binance.com/en/trade/${signal.symbol}', '_blank')">
-                    <i class="fas fa-chart-line"></i>
-                    تداول
-                </button>
-                <button class="btn-action btn-copy" data-signal='${JSON.stringify(signal)}'>
-                    <i class="fas fa-copy"></i>
-                    نسخ
-                </button>
-                <button class="btn-action btn-pin">
-                    <i class="fas fa-thumbtack"></i>
-                    تثبيت
-                </button>
-                <button class="btn-action btn-alert">
-                    <i class="fas fa-bell"></i>
-                    تنبيه
-                </button>
-            </div>
-        `;
+        </div>
         
-        // إضافة الإشارة في المقدمة
-        container.insertBefore(signalEl, container.firstChild);
+        <div class="signal-details">
+            <div class="signal-strength">
+                <span class="strength-stars">${'★'.repeat(signal.strength)}${'☆'.repeat(5-signal.strength)}</span>
+                <span class="strength-text">قوة الإشارة: ${this.getStrengthText(signal.strength)}</span>
+            </div>
+            <div class="signal-indicators">
+                <span class="rsi">RSI: ${signal.indicators.rsi}</span>
+                <span class="trend">الاتجاه: ${signal.indicators.trend}</span>
+                <span class="volume">الحجم: ${signal.indicators.volume}</span>
+            </div>
+        </div>
         
-        // إزالة رسالة "لا توجد إشارات"
-        const noSignalsEl = container.querySelector('.no-signals');
-        if (noSignalsEl) {
-            noSignalsEl.remove();
-        }
+        <div class="signal-time">
+            <i class="fas fa-clock"></i>
+            <span>${timeAgo}</span>
+        </div>
         
-        // إزالة فئة "new" بعد ثانيتين
-        setTimeout(() => {
-            signalEl.classList.remove('new');
-        }, 2000);
+        <div class="signal-actions">
+            <button class="btn-action btn-trade" onclick="window.open('https://www.binance.com/en/trade/${signal.symbol}', '_blank')">
+                <i class="fas fa-chart-line"></i>
+                تداول
+            </button>
+            <button class="btn-action btn-copy" data-signal='${JSON.stringify(signal)}'>
+                <i class="fas fa-copy"></i>
+                نسخ
+            </button>
+            <button class="btn-action btn-pin">
+                <i class="fas fa-thumbtack"></i>
+                تثبيت
+            </button>
+            <button class="btn-action btn-alert">
+                <i class="fas fa-bell"></i>
+                تنبيه
+            </button>
+        </div>
+    `;
+    
+    // إضافة الإشارة في المقدمة
+    container.insertBefore(signalEl, container.firstChild);
+    
+    // إزالة رسالة "لا توجد إشارات"
+    const noSignalsEl = container.querySelector('.no-signals');
+    if (noSignalsEl) {
+        noSignalsEl.remove();
     }
+    
+    // إزالة فئة "new" بعد ثانيتين
+    setTimeout(() => {
+        signalEl.classList.remove('new');
+    }, 2000);
+}
 
    async calculateCurrentProfitLoss(signal) {
     try {
