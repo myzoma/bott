@@ -5,7 +5,17 @@ class UTBotScanner {
         this.signals = { buy: [], sell: [] };
         this.pinnedSignals = new Set();
         this.signalPrices = new Map();
-        
+this.symbolsFilter = {
+        minVolume: 1000,        // الحد الأدنى للحجم
+        minPrice: 0.001,        // الحد الأدنى للسعر
+        maxSymbols: 100,        // العدد الأقصى للرموز
+        includeStableCoins: false // تضمين العملات المستقرة
+    };
+}
+    updateSymbolsFilter(newFilter) {
+    this.symbolsFilter = { ...this.symbolsFilter, ...newFilter };
+    this.loadSymbols(); // إعادة تحميل الرموز
+}
         // الإعدادات
         this.atrPeriod = 5;
         this.atrMultiplier = 1.0;
@@ -125,25 +135,79 @@ class UTBotScanner {
         window.addEventListener('beforeunload', () => this.saveSettings());
     }
 
-    async loadSymbols() {
-        try {
-            // قائمة العملات الرقمية الشائعة
-            this.symbols = [
-                'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT',
-                'SOLUSDT', 'DOTUSDT', 'DOGEUSDT', 'AVAXUSDT', 'SHIBUSDT',
-                'MATICUSDT', 'LTCUSDT', 'UNIUSDT', 'LINKUSDT', 'ATOMUSDT',
-                'ETCUSDT', 'XLMUSDT', 'BCHUSDT', 'FILUSDT', 'TRXUSDT',
-                'VETUSDT', 'ICPUSDT', 'FTMUSDT', 'HBARUSDT', 'NEARUSDT',
-                'ALGOUSDT', 'QNTUSDT', 'FLOWUSDT', 'EGLDUSDT', 'SANDUSDT',
-                'MANAUSDT', 'AXSUSDT', 'THETAUSDT', 'XTZUSDT', 'AAVEUSDT'
-            ];
-            
-            console.log(`تم تحميل ${this.symbols.length} رمز للمسح`);
-        } catch (error) {
-            console.error('خطأ في تحميل الرموز:', error);
-            this.symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT']; // رموز افتراضية
+   async loadSymbols() {
+    try {
+        console.log('جاري تحميل الرموز من بينانس...');
+        
+        // الحصول على جميع الرموز النشطة من بينانس
+        const response = await fetch('https://api1.binance.com/api/v3/exchangeInfo');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+        
+        const data = await response.json();
+        
+        // فلترة الرموز النشطة مع USDT فقط
+        const usdtSymbols = data.symbols
+            .filter(symbol => 
+                symbol.status === 'TRADING' && 
+                symbol.symbol.endsWith('USDT') &&
+                symbol.permissions.includes('SPOT')
+            )
+            .map(symbol => symbol.symbol);
+        
+        // ترتيب حسب الحجم (الحصول على أكثر الرموز تداولاً)
+        const topSymbols = await this.getTopTradingSymbols(usdtSymbols);
+        
+        this.symbols = topSymbols;
+        
+        console.log(`✅ تم تحميل ${this.symbols.length} رمز نشط من بينانس`);
+        console.log('أهم الرموز:', this.symbols.slice(0, 10));
+        
+    } catch (error) {
+        console.error('❌ خطأ في تحميل الرموز من بينانس:', error);
+        
+        // استخدام قائمة احتياطية في حالة الفشل
+        this.symbols = await this.getFallbackSymbols();
+        console.log(`⚠️ تم استخدام القائمة الاحتياطية: ${this.symbols.length} رمز`);
     }
+}
+async getTopTradingSymbols(allSymbols, limit = 100) {
+    try {
+        console.log('جاري ترتيب الرموز حسب الحجم...');
+        
+        // الحصول على إحصائيات 24 ساعة لجميع الرموز
+        const response = await fetch('https://api1.binance.com/api/v3/ticker/24hr');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const stats = await response.json();
+        
+        // فلترة وترتيب الرموز USDT حسب الحجم
+        const sortedSymbols = stats
+            .filter(stat => 
+                allSymbols.includes(stat.symbol) &&
+                parseFloat(stat.volume) > 1000 && // حجم تداول أكبر من 1000
+                parseFloat(stat.count) > 100     // عدد صفقات أكبر من 100
+            )
+            .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
+            .slice(0, limit)
+            .map(stat => stat.symbol);
+        
+        console.log(`📊 تم ترتيب ${sortedSymbols.length} رمز حسب الحجم`);
+        return sortedSymbols;
+        
+    } catch (error) {
+        console.error('خطأ في ترتيب الرموز:', error);
+        
+        // إرجاع أول رموز من القائمة الأصلية
+        return allSymbols.slice(0, limit);
+    }
+}
+
 
     async start() {
         if (this.isRunning) return;
@@ -622,7 +686,9 @@ class UTBotScanner {
     renderSignal(signal, type) {
         const container = type === 'buy' ? this.buySignalsEl : this.sellSignalsEl;
         if (!container) return;
-        
+        const currentPrice = await this.getCurrentPrice(signal.symbol);
+    const profitLoss = currentPrice ? 
+        await this.calculateCurrentProfitLoss(signal) : 0;
         const signalEl = document.createElement('div');
         signalEl.className = `signal-item ${type} new`;
         signalEl.dataset.signalId = signal.id;
@@ -720,11 +786,19 @@ class UTBotScanner {
         }, 2000);
     }
 
-    calculateCurrentProfitLoss(signal) {
-        // هذه دالة مؤقتة - في التطبيق الحقيقي نحتاج للسعر الحالي من API
-        const randomChange = (Math.random() - 0.5) * 4; // تغيير عشوائي بين -2% و +2%
-        return randomChange;
+   async calculateCurrentProfitLoss(signal) {
+    try {
+        const currentPrice = await this.getCurrentPrice(signal.symbol);
+        if (!currentPrice) return 0;
+        
+        const change = ((currentPrice - signal.price) / signal.price) * 100;
+        return signal.type === 'buy' ? change : -change;
+    } catch (error) {
+        console.error('خطأ في حساب الربح/الخسارة:', error);
+        return 0;
     }
+}
+
 
     calculateTargetProfit(signal) {
         if (signal.type === 'buy') {
@@ -784,28 +858,36 @@ class UTBotScanner {
         });
     }
 
-    async updatePrices() {
-        if (!this.isRunning) return;
+  async updatePrices() {
+    if (!this.isRunning) return;
+
+    try {
+        const activeSymbols = new Set();
+        [...this.signals.buy, ...this.signals.sell].forEach(signal => {
+            activeSymbols.add(signal.symbol);
+        });
+
+        if (activeSymbols.size === 0) return;
+
+        // تقسيم الطلبات لتجنب حدود API
+        const symbolsArray = Array.from(activeSymbols);
+        const batchSize = 20; // معالجة 20 رمز في كل مرة
         
-        try {
-            // جمع جميع الرموز النشطة
-            const activeSymbols = new Set();
-            [...this.signals.buy, ...this.signals.sell].forEach(signal => {
-                activeSymbols.add(signal.symbol);
-            });
-            
-            if (activeSymbols.size === 0) return;
-            
-            // الحصول على الأسعار الحالية
-            const prices = await this.getCurrentPrices(Array.from(activeSymbols));
-            
-            // تحديث الأسعار في DOM
+        for (let i = 0; i < symbolsArray.length; i += batchSize) {
+            const batch = symbolsArray.slice(i, i + batchSize);
+            const prices = await this.getCurrentPrices(batch);
             this.updatePriceDisplay(prices);
             
-        } catch (error) {
-            console.error('خطأ في تحديث الأسعار:', error);
+            // تأخير قصير بين الدفعات
+            if (i + batchSize < symbolsArray.length) {
+                await this.delay(200);
+            }
         }
+    } catch (error) {
+        console.error('خطأ في تحديث الأسعار:', error);
     }
+}
+
 
     async getCurrentPrices(symbols) {
         try {
@@ -1240,34 +1322,67 @@ class UTBotScanner {
         // تنبيه الإشارات القوية
         this.checkStrongSignalAlerts();
     }
+async getCurrentPrice(symbol) {
+    try {
+        const response = await fetch(
+            `https://api1.binance.com/api/v3/ticker/price?symbol=${symbol}`
+        );
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return parseFloat(data.price);
+    } catch (error) {
+        console.error(`خطأ في الحصول على سعر ${symbol}:`, error);
+        return null;
+    }
+}
 
-    checkTargetAlerts() {
-        [...this.signals.buy, ...this.signals.sell].forEach(signal => {
-            const signalEl = document.querySelector(`[data-signal-id="${signal.id}"]`);
-            if (!signalEl || !signalEl.querySelector('.btn-alert.active')) return;
+    async checkTargetAlerts() {
+    for (const signal of [...this.signals.buy, ...this.signals.sell]) {
+        const signalEl = document.querySelector(`[data-signal-id="${signal.id}"]`);
+        if (!signalEl || !signalEl.querySelector('.btn-alert.active')) continue;
+        
+        try {
+            const currentPrice = await this.getCurrentPrice(signal.symbol);
+            if (!currentPrice) continue;
             
-            // محاكاة فحص الوصول للهدف (في التطبيق الحقيقي نحتاج السعر الحالي)
-            const randomReached = Math.random() > 0.95; // 5% احتمال
-            
-            if (randomReached) {
+            const targetReached = signal.type === 'buy' 
+                ? currentPrice >= signal.target 
+                : currentPrice <= signal.target;
+                
+            if (targetReached) {
                 this.showTargetReachedNotification(signal);
             }
-        });
+        } catch (error) {
+            console.error(`خطأ في فحص الهدف لـ ${signal.symbol}:`, error);
+        }
     }
+}
 
-    checkStopLossAlerts() {
-        [...this.signals.buy, ...this.signals.sell].forEach(signal => {
-            const signalEl = document.querySelector(`[data-signal-id="${signal.id}"]`);
-            if (!signalEl || !signalEl.querySelector('.btn-alert.active')) return;
+async checkStopLossAlerts() {
+    for (const signal of [...this.signals.buy, ...this.signals.sell]) {
+        const signalEl = document.querySelector(`[data-signal-id="${signal.id}"]`);
+        if (!signalEl || !signalEl.querySelector('.btn-alert.active')) continue;
+        
+        try {
+            const currentPrice = await this.getCurrentPrice(signal.symbol);
+            if (!currentPrice) continue;
             
-            // محاكاة فحص الاقتراب من وقف الخسارة
-            const randomNearStop = Math.random() > 0.98; // 2% احتمال
-            
-            if (randomNearStop) {
+            const nearStopLoss = signal.type === 'buy'
+                ? currentPrice <= signal.stopLoss * 1.02 // 2% من وقف الخسارة
+                : currentPrice >= signal.stopLoss * 0.98;
+                
+            if (nearStopLoss) {
                 this.showStopLossWarning(signal);
             }
-        });
+        } catch (error) {
+            console.error(`خطأ في فحص وقف الخسارة لـ ${signal.symbol}:`, error);
+        }
     }
+}
 
     checkStrongSignalAlerts() {
         const strongSignals = [...this.signals.buy, ...this.signals.sell]
