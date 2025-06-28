@@ -5,17 +5,15 @@ class UTBotScanner {
         this.signals = { buy: [], sell: [] };
         this.pinnedSignals = new Set();
         this.signalPrices = new Map();
-this.symbolsFilter = {
-        minVolume: 1000,        // الحد الأدنى للحجمل
-        minPrice: 0.001,        // الحد الأدنى للسعر
-        maxSymbols: 100,        // العدد الأقصى للرموز
-        includeStableCoins: false // تضمين العملات المستقرة
-    };
-}
-    updateSymbolsFilter(newFilter) {
-    this.symbolsFilter = { ...this.symbolsFilter, ...newFilter };
-    this.loadSymbols(); // إعادة تحميل الرموز
-}
+        
+        // إصلاح السطر 20 - وضع جميع الخصائص داخل constructor
+        this.symbolsFilter = {
+            minVolume: 1000,        // الحد الأدنى للحجم
+            minPrice: 0.001,        // الحد الأدنى للسعر
+            maxSymbols: 100,        // العدد الأقصى للرموز
+            includeStableCoins: false // تضمين العملات المستقرة
+        };
+        
         // الإعدادات
         this.atrPeriod = 5;
         this.atrMultiplier = 1.0;
@@ -30,6 +28,12 @@ this.symbolsFilter = {
         this.bindEvents();
         this.loadSymbols();
         this.autoStart();
+    }
+    
+    // نقل الدالة خارج constructor
+    updateSymbolsFilter(newFilter) {
+        this.symbolsFilter = { ...this.symbolsFilter, ...newFilter };
+        this.loadSymbols(); // إعادة تحميل الرموز
     }
 
     initializeElements() {
