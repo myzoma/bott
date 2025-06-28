@@ -64,7 +64,9 @@ class UTBotScanner {
             settingsGroup.appendChild(sensitivityDiv);
         }
     }
-
+calculateCurrentProfitLoss(signal) {
+    return 0;
+}
     bindEvents() {
         // أزرار التحكم
         this.startBtn?.addEventListener('click', () => this.start());
