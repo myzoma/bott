@@ -627,7 +627,7 @@ class UTBotScanner {
         signalEl.className = `signal-item ${type} new`;
         signalEl.dataset.signalId = signal.id;
         
-        const profitLoss = this.calculateCurrentProfitLoss(signal);
+       const profitLoss = 0; // أو يمكنك جعله فارغاً أو 0% كبداية
         const timeAgo = this.getTimeAgo(signal.timestamp);
         
         signalEl.innerHTML = `
