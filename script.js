@@ -177,9 +177,13 @@ class UTBotScanner {
         console.log(`⚠️ تم استخدام القائمة الاحتياطية: ${this.symbols.length} رمز`);
     }
 }
-async getTopTradingSymbols(allSymbols, limit = 100) {
+async getTopTradingSymbols(allSymbols, limit = null) {
     try {
         console.log('جاري ترتيب الرموز حسب الحجم...');
+        console.log('عدد الرموز المتاحة:', allSymbols.length);
+        
+        // استخدام الحد المحدد في الفلتر
+        const maxSymbols = limit || this.symbolsFilter.maxSymbols;
         
         // الحصول على إحصائيات 24 ساعة لجميع الرموز
         const response = await fetch('https://api1.binance.com/api/v3/ticker/24hr');
@@ -189,26 +193,73 @@ async getTopTradingSymbols(allSymbols, limit = 100) {
         }
         
         const stats = await response.json();
+        console.log('عدد الإحصائيات المستلمة:', stats.length);
         
         // فلترة وترتيب الرموز USDT حسب الحجم
-        const sortedSymbols = stats
-            .filter(stat => 
-                allSymbols.includes(stat.symbol) &&
-                parseFloat(stat.volume) > 1000 && // حجم تداول أكبر من 1000
-                parseFloat(stat.count) > 100     // عدد صفقات أكبر من 100
-            )
+        const filteredStats = stats.filter(stat => {
+            if (!allSymbols.includes(stat.symbol)) return false;
+            
+            const volume = parseFloat(stat.volume);
+            const price = parseFloat(stat.lastPrice);
+            const quoteVolume = parseFloat(stat.quoteVolume);
+            
+            // تسجيل تفاصيل الفلترة للتشخيص
+            const passesVolumeFilter = volume >= this.symbolsFilter.minVolume;
+            const passesPriceFilter = price >= this.symbolsFilter.minPrice;
+            const passesQuoteVolumeFilter = quoteVolume > 10000; // تقليل الحد الأدنى
+            
+            if (!passesVolumeFilter) {
+                console.log(`${stat.symbol} فشل في فلتر الحجم: ${volume} < ${this.symbolsFilter.minVolume}`);
+                return false;
+            }
+            
+            if (!passesPriceFilter) {
+                console.log(`${stat.symbol} فشل في فلتر السعر: ${price} < ${this.symbolsFilter.minPrice}`);
+                return false;
+            }
+            
+            if (!passesQuoteVolumeFilter) {
+                console.log(`${stat.symbol} فشل في فلتر حجم التداول: ${quoteVolume} < 10000`);
+                return false;
+            }
+            
+            // استبعاد العملات المستقرة إذا لم يتم تفعيلها
+            if (!this.symbolsFilter.includeStableCoins) {
+                const stableCoins = ['BUSD', 'USDC', 'TUSD', 'PAX', 'DAI', 'FDUSD'];
+                const baseAsset = stat.symbol.replace('USDT', '');
+                if (stableCoins.includes(baseAsset)) {
+                    console.log(`${stat.symbol} تم استبعاده كعملة مستقرة`);
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+        
+        console.log('عدد الرموز بعد الفلترة:', filteredStats.length);
+        
+        if (filteredStats.length === 0) {
+            console.warn('لم يتم العثور على رموز تطابق المعايير، سيتم تخفيف الفلاتر...');
+            return await this.getTopTradingSymbolsRelaxed(allSymbols, maxSymbols);
+        }
+        
+        const sortedSymbols = filteredStats
             .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-            .slice(0, limit)
+            .slice(0, maxSymbols)
             .map(stat => stat.symbol);
         
         console.log(`📊 تم ترتيب ${sortedSymbols.length} رمز حسب الحجم`);
+        console.log('أول 10 رموز:', sortedSymbols.slice(0, 10));
+        
         return sortedSymbols;
         
     } catch (error) {
         console.error('خطأ في ترتيب الرموز:', error);
         
         // إرجاع أول رموز من القائمة الأصلية
-        return allSymbols.slice(0, limit);
+        const fallback = allSymbols.slice(0, this.symbolsFilter.maxSymbols);
+        console.log('استخدام الرموز الاحتياطية:', fallback.slice(0, 10));
+        return fallback;
     }
 }
 
