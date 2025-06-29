@@ -1009,7 +1009,7 @@ The Smart Hunter_${type}_signals_${new Date().toISOString().split('T')[0]}.csv`)
 ⭐ القوة: ${signalData.strength}/5
 📊 RSI: ${signalData.indicators.rsi}
 📈 الاتجاه: ${signalData.indicators.trend}
-⏰ الوقت: ${signalData.timestamp.toLocaleString('ar-SA')}
+⏰ الوقت: ${new Date(signalData.timestamp).toUTCString()}
 
 #Yaser, #The Smart Hunter, #Crypto
         `.trim();
