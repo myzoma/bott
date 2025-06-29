@@ -999,7 +999,7 @@ calculateCurrentProfitLoss(signal) {
         const signalData = JSON.parse(copyBtn.dataset.signal);
         
         const signalText = `
-🚀 إشارة ${signalData.type === 'buy' ? 'شراء' : 'بيع'} The Smart Hunter
+🚀 إشارة ${signalData.type === 'buy' ? 'شراء' : 'بيع'} ||The Smart Hunter
 
 💰 العملة: ${signalData.symbol}
 💵 السعر: $${signalData.price.toFixed(6)}
