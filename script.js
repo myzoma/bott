@@ -950,7 +950,8 @@ calculateCurrentProfitLoss(signal) {
         if (link.download !== undefined) {
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', `utbot_${type}_signals_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute('download', `
+The Smart Hunter_${type}_signals_${new Date().toISOString().split('T')[0]}.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
