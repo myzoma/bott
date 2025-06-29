@@ -347,7 +347,7 @@ calculateCurrentProfitLoss(signal) {
                 if (currentTrend !== prevTrend && i > this.atrPeriod + 1) {
                     signals.push({
                         index: i,
-                        trend: currentTrend === 1 ? 'buy' : 'sell',
+                        type: currentTrend === 1 ? 'buy' : 'sell',
                         price: close,
                         atr: currentATR,
                         timestamp: candles[i][0]
