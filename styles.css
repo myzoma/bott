@@ -13,23 +13,7 @@
     --danger-color: #ff3547;
     --info-color: #00bcd4;
     
-    /* Extended Color Palette */
-    --primary-light: #33d4ff;
-    --primary-dark: #0099cc;
-    --secondary-light: #ffdc33;
-    --secondary-dark: #ccac00;
-    --accent-light: #ed6c5c;
-    --accent-dark: #c0392b;
-    
-    /* Background Variations */
-    --bg-primary: var(--bg-darker);
-    --bg-secondary: var(--bg-dark);
-    --bg-tertiary: #1a1a1a;
-    --bg-card-hover: #2a2a2a;
-    --bg-glass: rgba(37, 37, 37, 0.8);
-    --bg-gradient-primary: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 50%, var(--bg-card) 100%);
-    --bg-gradient-card: linear-gradient(145deg, var(--bg-card) 0%, #2a2a2a 100%);
-    
+ 
     /* Text Colors */
     --text-primary: var(--text-light);
     --text-secondary: #b0b0b0;
