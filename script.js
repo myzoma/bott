@@ -999,7 +999,7 @@ calculateCurrentProfitLoss(signal) {
         const signalData = JSON.parse(copyBtn.dataset.signal);
         
         const signalText = `
-🚀 إشارة ${signalData.type === 'buy' ? 'شراء' : 'بيع'} UTBot
+🚀 إشارة ${signalData.type === 'buy' ? 'شراء' : 'بيع'} The Smart Hunter
 
 💰 العملة: ${signalData.symbol}
 💵 السعر: $${signalData.price.toFixed(6)}
@@ -1010,7 +1010,7 @@ calculateCurrentProfitLoss(signal) {
 📈 الاتجاه: ${signalData.indicators.trend}
 ⏰ الوقت: ${signalData.timestamp.toLocaleString('ar-SA')}
 
-#UTBot #TradingSignals #Crypto
+#Yaser, #The Smart Hunter, #Crypto
         `.trim();
         
         navigator.clipboard.writeText(signalText).then(() => {
