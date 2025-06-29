@@ -677,7 +677,7 @@ calculateCurrentProfitLoss(signal) {
                 </div>
                 <div class="signal-indicators">
                     <span class="rsi">RSI: ${signal.indicators.rsi}</span>
-                    <span class="trend">الاتجاه: ${signal.trend}</span>
+                   <span class="trend">الاتجاه: ${signal.indicators.trend}</span>
                     <span class="volume">الحجم: ${signal.indicators.volume}</span>
                 </div>
             </div>
