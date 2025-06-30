@@ -310,91 +310,58 @@ calculateCurrentProfitLoss(signal) {
         }
     }
 
-calculateUTBot(candles) {
-    try {
-        const signals = [];
-        const atr = this.calculateATR(candles, this.atrPeriod);
-        
-        let upTrend = [];
-        let downTrend = [];
-        let trend = [];
-        
-        for (let i = this.atrPeriod; i < candles.length; i++) {
-            const close = candles[i][4];
-            const high = candles[i][2];
-            const low = candles[i][3];
-            const currentATR = atr[i - this.atrPeriod];
+    calculateUTBot(candles) {
+        try {
+            const signals = [];
+            const atr = this.calculateATR(candles, this.atrPeriod);
             
-            const hl2 = (high + low) / 2;
-            const basicUpperBand = hl2 + (this.atrMultiplier * currentATR);
-            const basicLowerBand = hl2 - (this.atrMultiplier * currentATR);
+            let upTrend = [];
+            let downTrend = [];
+            let trend = [];
             
-            let finalUpperBand;
-            if (i === this.atrPeriod) {
-                finalUpperBand = basicUpperBand;
-            } else {
-                const prevFinalUpper = upTrend[upTrend.length - 1];
+            for (let i = this.atrPeriod; i < candles.length; i++) {
+                const close = candles[i][4];
                 const prevClose = candles[i-1][4];
-                finalUpperBand = basicUpperBand < prevFinalUpper || prevClose > prevFinalUpper 
-                    ? basicUpperBand 
-                    : prevFinalUpper;
-            }
-            
-            let finalLowerBand;
-            if (i === this.atrPeriod) {
-                finalLowerBand = basicLowerBand;
-            } else {
-                const prevFinalLower = downTrend[downTrend.length - 1];
-                const prevClose = candles[i-1][4];
-                finalLowerBand = basicLowerBand > prevFinalLower || prevClose < prevFinalLower 
-                    ? basicLowerBand 
-                    : prevFinalLower;
-            }
-            
-            upTrend.push(finalUpperBand);
-            downTrend.push(finalLowerBand);
-            
-            let currentTrend;
-            if (i === this.atrPeriod) {
-                currentTrend = close > finalLowerBand ? 1 : -1;
-            } else {
-                const prevTrend = trend[trend.length - 1];
-                if (prevTrend === 1) {
-                    currentTrend = close <= finalLowerBand ? -1 : 1;
+                const currentATR = atr[i - this.atrPeriod];
+                
+                // حساب خطوط الاتجاه
+                const basicUpperBand = close + (this.atrMultiplier * currentATR);
+                const basicLowerBand = close - (this.atrMultiplier * currentATR);
+                
+                // تحديد الاتجاه
+                let currentTrend;
+                if (close > (upTrend[upTrend.length - 1] || 0)) {
+                    currentTrend = 1; // اتجاه صاعد
+                } else if (close < (downTrend[downTrend.length - 1] || Infinity)) {
+                    currentTrend = -1; // اتجاه هابط
                 } else {
-                    currentTrend = close >= finalUpperBand ? 1 : -1;
+                    currentTrend = trend[trend.length - 1] || 0;
                 }
-            }
-            
-            trend.push(currentTrend);
-            
-            if (i > this.atrPeriod) {
-                const prevTrend = trend[trend.length - 2];
-                if (currentTrend !== prevTrend) {
+                
+                upTrend.push(currentTrend === 1 ? basicLowerBand : basicUpperBand);
+                downTrend.push(currentTrend === -1 ? basicUpperBand : basicLowerBand);
+                trend.push(currentTrend);
+                
+                // اكتشاف تغيير الاتجاه
+                const prevTrend = trend[trend.length - 2] || 0;
+                if (currentTrend !== prevTrend && i > this.atrPeriod + 1) {
                     signals.push({
                         index: i,
                         type: currentTrend === 1 ? 'buy' : 'sell',
                         price: close,
                         atr: currentATR,
-                        timestamp: candles[i][0],
-                        // استخدم اتجاه UTBot مباشرة
-                        utbotTrend: currentTrend === 1 ? 'صاعد' : 'هابط',
-                        upperBand: finalUpperBand,
-                        lowerBand: finalLowerBand
+                        timestamp: candles[i][0]
                     });
                 }
             }
+            
+            return signals;
+            
+        } catch (error) {
+            console.error('خطأ في حساب UTBot:', error);
+            return [];
         }
-        
-        return signals;
-        
-    } catch (error) {
-        console.error('خطأ في حساب UTBot:', error);
-        return [];
     }
-}
-
-
 
     calculateATR(candles, period) {
         const tr = [];
@@ -574,31 +541,17 @@ calculateUTBot(candles) {
         return rsi;
     }
 
-   getTrendDirection(candles) {
-    const sma20 = this.calculateSMA(candles, 20);
-    const sma50 = this.calculateSMA(candles, 50);
-    
-    const current20 = sma20[sma20.length - 1];
-    const current50 = sma50[sma50.length - 1];
-    const prev20 = sma20[sma20.length - 2];
-    const prev50 = sma50[sma50.length - 2];
-    
-    // تحسين المنطق
-    const diff = current20 - current50;
-    const prevDiff = prev20 - prev50;
-    
-    // إضافة هامش للتقلبات الصغيرة
-    const threshold = 0.001; // 0.1%
-    
-    if (diff > threshold && current20 > prev20) {
-        return 'صاعد';
-    } else if (diff < -threshold && current20 < prev20) {
-        return 'هابط';
-    } else {
-        return 'جانبي';
+    getTrendDirection(candles) {
+        const sma20 = this.calculateSMA(candles, 20);
+        const sma50 = this.calculateSMA(candles, 50);
+        
+        const current20 = sma20[sma20.length - 1];
+        const current50 = sma50[sma50.length - 1];
+        
+        if (current20 > current50) return 'صاعد';
+        else if (current20 < current50) return 'هابط';
+        else return 'جانبي';
     }
-}
-
 
     calculateSMA(candles, period) {
         const prices = candles.map(c => c[4]);
