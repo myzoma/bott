@@ -311,57 +311,75 @@ calculateCurrentProfitLoss(signal) {
     }
 
     calculateUTBot(candles) {
-        try {
-            const signals = [];
-            const atr = this.calculateATR(candles, this.atrPeriod);
+    try {
+        const signals = [];
+        const atr = this.calculateATR(candles, this.atrPeriod);
+        
+        let upTrend = [];
+        let downTrend = [];
+        let trend = [];
+        
+        for (let i = this.atrPeriod; i < candles.length; i++) {
+            const close = candles[i][4];
+            const high = candles[i][2];
+            const low = candles[i][3];
+            const currentATR = atr[i - this.atrPeriod];
             
-            let upTrend = [];
-            let downTrend = [];
-            let trend = [];
+            // حساب خطوط الاتجاه
+            const basicUpperBand = close + (this.atrMultiplier * currentATR);
+            const basicLowerBand = close - (this.atrMultiplier * currentATR);
             
-            for (let i = this.atrPeriod; i < candles.length; i++) {
-                const close = candles[i][4];
-                const prevClose = candles[i-1][4];
-                const currentATR = atr[i - this.atrPeriod];
-                
-                // حساب خطوط الاتجاه
-                const basicUpperBand = close + (this.atrMultiplier * currentATR);
-                const basicLowerBand = close - (this.atrMultiplier * currentATR);
-                
-                // تحديد الاتجاه
-                let currentTrend;
-                if (close > (upTrend[upTrend.length - 1] || 0)) {
-                    currentTrend = 1; // اتجاه صاعد
-                } else if (close < (downTrend[downTrend.length - 1] || Infinity)) {
-                    currentTrend = -1; // اتجاه هابط
-                } else {
-                    currentTrend = trend[trend.length - 1] || 0;
-                }
-                
-                upTrend.push(currentTrend === 1 ? basicLowerBand : basicUpperBand);
-                downTrend.push(currentTrend === -1 ? basicUpperBand : basicLowerBand);
-                trend.push(currentTrend);
-                
-                // اكتشاف تغيير الاتجاه
-                const prevTrend = trend[trend.length - 2] || 0;
-                if (currentTrend !== prevTrend && i > this.atrPeriod + 1) {
-                    signals.push({
-                        index: i,
-                        type: currentTrend === 1 ? 'buy' : 'sell',
-                        price: close,
-                        atr: currentATR,
-                        timestamp: candles[i][0]
-                    });
-                }
+            // الحصول على القيم السابقة
+            const prevUpTrend = upTrend[upTrend.length - 1] || basicLowerBand;
+            const prevDownTrend = downTrend[downTrend.length - 1] || basicUpperBand;
+            const prevTrend = trend[trend.length - 1] || 0;
+            
+            // تحديث خطوط الاتجاه
+            let currentUpTrend = basicLowerBand > prevUpTrend || candles[i-1][4] < prevUpTrend 
+                ? basicLowerBand : prevUpTrend;
+            let currentDownTrend = basicUpperBand < prevDownTrend || candles[i-1][4] > prevDownTrend 
+                ? basicUpperBand : prevDownTrend;
+            
+            // تحديد الاتجاه الحالي - منطق محسن ✅
+            let currentTrend;
+            if (prevTrend === 1 && close <= currentUpTrend) {
+                currentTrend = -1; // تغيير من صاعد إلى هابط
+            } else if (prevTrend === -1 && close >= currentDownTrend) {
+                currentTrend = 1; // تغيير من هابط إلى صاعد
+            } else {
+                currentTrend = prevTrend; // الحفاظ على الاتجاه الحالي
             }
             
-            return signals;
+            // إذا كان أول حساب، حدد الاتجاه بناءً على الموضع
+            if (prevTrend === 0) {
+                currentTrend = close > currentUpTrend ? 1 : -1;
+            }
             
-        } catch (error) {
-            console.error('خطأ في حساب UTBot:', error);
-            return [];
+            upTrend.push(currentUpTrend);
+            downTrend.push(currentDownTrend);
+            trend.push(currentTrend);
+            
+            // اكتشاف تغيير الاتجاه - محسن ✅
+            if (currentTrend !== prevTrend && prevTrend !== 0) {
+                signals.push({
+                    index: i,
+                    type: currentTrend === 1 ? 'buy' : 'sell',
+                    price: close,
+                    atr: currentATR,
+                    timestamp: candles[i][0],
+                    trend: currentTrend === 1 ? 'صاعد' : 'هابط' // الاتجاه الصحيح!
+                });
+            }
         }
+        
+        return signals;
+        
+    } catch (error) {
+        console.error('خطأ في حساب UTBot:', error);
+        return [];
     }
+}
+
 
     calculateATR(candles, period) {
         const tr = [];
