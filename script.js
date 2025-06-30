@@ -574,17 +574,31 @@ calculateUTBot(candles) {
         return rsi;
     }
 
-    getTrendDirection(candles) {
-        const sma20 = this.calculateSMA(candles, 20);
-        const sma50 = this.calculateSMA(candles, 50);
-        
-        const current20 = sma20[sma20.length - 1];
-        const current50 = sma50[sma50.length - 1];
-        
-        if (current20 > current50) return 'صاعد';
-        else if (current20 < current50) return 'هابط';
-        else return 'جانبي';
+   getTrendDirection(candles) {
+    const sma20 = this.calculateSMA(candles, 20);
+    const sma50 = this.calculateSMA(candles, 50);
+    
+    const current20 = sma20[sma20.length - 1];
+    const current50 = sma50[sma50.length - 1];
+    const prev20 = sma20[sma20.length - 2];
+    const prev50 = sma50[sma50.length - 2];
+    
+    // تحسين المنطق
+    const diff = current20 - current50;
+    const prevDiff = prev20 - prev50;
+    
+    // إضافة هامش للتقلبات الصغيرة
+    const threshold = 0.001; // 0.1%
+    
+    if (diff > threshold && current20 > prev20) {
+        return 'صاعد';
+    } else if (diff < -threshold && current20 < prev20) {
+        return 'هابط';
+    } else {
+        return 'جانبي';
     }
+}
+
 
     calculateSMA(candles, period) {
         const prices = candles.map(c => c[4]);
