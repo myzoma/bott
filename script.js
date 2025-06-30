@@ -325,12 +325,10 @@ calculateUTBot(candles) {
             const low = candles[i][3];
             const currentATR = atr[i - this.atrPeriod];
             
-            // حساب خطوط الاتجاه الأساسية
             const hl2 = (high + low) / 2;
             const basicUpperBand = hl2 + (this.atrMultiplier * currentATR);
             const basicLowerBand = hl2 - (this.atrMultiplier * currentATR);
             
-            // حساب الخط العلوي النهائي
             let finalUpperBand;
             if (i === this.atrPeriod) {
                 finalUpperBand = basicUpperBand;
@@ -342,7 +340,6 @@ calculateUTBot(candles) {
                     : prevFinalUpper;
             }
             
-            // حساب الخط السفلي النهائي
             let finalLowerBand;
             if (i === this.atrPeriod) {
                 finalLowerBand = basicLowerBand;
@@ -357,40 +354,31 @@ calculateUTBot(candles) {
             upTrend.push(finalUpperBand);
             downTrend.push(finalLowerBand);
             
-            // تحديد الاتجاه الحالي - هنا كانت المشكلة
             let currentTrend;
             if (i === this.atrPeriod) {
-                // البداية: إذا كان السعر فوق الخط السفلي = صاعد، تحت الخط العلوي = هابط
                 currentTrend = close > finalLowerBand ? 1 : -1;
             } else {
                 const prevTrend = trend[trend.length - 1];
-                
-                if (prevTrend === 1) { // كان صاعد
-                    // يبقى صاعد ما لم يكسر الخط السفلي للأسفل
-                    currentTrend = close > finalLowerBand ? 1 : -1;
-                } else { // كان هابط
-                    // يبقى هابط ما لم يكسر الخط العلوي للأعلى
-                    currentTrend = close < finalUpperBand ? -1 : 1;
+                if (prevTrend === 1) {
+                    currentTrend = close <= finalLowerBand ? -1 : 1;
+                } else {
+                    currentTrend = close >= finalUpperBand ? 1 : -1;
                 }
             }
             
             trend.push(currentTrend);
             
-            // اكتشاف تغيير الاتجاه وإنتاج الإشارات
             if (i > this.atrPeriod) {
                 const prevTrend = trend[trend.length - 2];
                 if (currentTrend !== prevTrend) {
-                    // المنطق الصحيح للإشارات
-                    const signalType = currentTrend === 1 ? 'buy' : 'sell';
-                    const trendDirection = currentTrend === 1 ? 'صاعد' : 'هابط';
-                    
                     signals.push({
                         index: i,
-                        type: signalType,
+                        type: currentTrend === 1 ? 'buy' : 'sell',
                         price: close,
                         atr: currentATR,
                         timestamp: candles[i][0],
-                        trend: trendDirection,
+                        // استخدم اتجاه UTBot مباشرة
+                        utbotTrend: currentTrend === 1 ? 'صاعد' : 'هابط',
                         upperBand: finalUpperBand,
                         lowerBand: finalLowerBand
                     });
@@ -405,6 +393,7 @@ calculateUTBot(candles) {
         return [];
     }
 }
+
 
 
     calculateATR(candles, period) {
