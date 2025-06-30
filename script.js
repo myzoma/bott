@@ -326,8 +326,9 @@ calculateCurrentProfitLoss(signal) {
             const currentATR = atr[i - this.atrPeriod];
             
             // حساب خطوط الاتجاه الأساسية
-            const basicUpperBand = (high + low) / 2 + (this.atrMultiplier * currentATR);
-            const basicLowerBand = (high + low) / 2 - (this.atrMultiplier * currentATR);
+            const hl2 = (high + low) / 2;
+            const basicUpperBand = hl2 + (this.atrMultiplier * currentATR);
+            const basicLowerBand = hl2 - (this.atrMultiplier * currentATR);
             
             // حساب الخط العلوي النهائي
             let finalUpperBand;
@@ -335,7 +336,8 @@ calculateCurrentProfitLoss(signal) {
                 finalUpperBand = basicUpperBand;
             } else {
                 const prevFinalUpper = upTrend[upTrend.length - 1];
-                finalUpperBand = basicUpperBand < prevFinalUpper || candles[i-1][4] > prevFinalUpper 
+                const prevClose = candles[i-1][4];
+                finalUpperBand = basicUpperBand < prevFinalUpper || prevClose > prevFinalUpper 
                     ? basicUpperBand 
                     : prevFinalUpper;
             }
@@ -346,7 +348,8 @@ calculateCurrentProfitLoss(signal) {
                 finalLowerBand = basicLowerBand;
             } else {
                 const prevFinalLower = downTrend[downTrend.length - 1];
-                finalLowerBand = basicLowerBand > prevFinalLower || candles[i-1][4] < prevFinalLower 
+                const prevClose = candles[i-1][4];
+                finalLowerBand = basicLowerBand > prevFinalLower || prevClose < prevFinalLower 
                     ? basicLowerBand 
                     : prevFinalLower;
             }
@@ -354,18 +357,20 @@ calculateCurrentProfitLoss(signal) {
             upTrend.push(finalUpperBand);
             downTrend.push(finalLowerBand);
             
-            // تحديد الاتجاه الحالي
+            // تحديد الاتجاه الحالي - هنا كانت المشكلة
             let currentTrend;
             if (i === this.atrPeriod) {
-                currentTrend = close <= finalLowerBand ? 1 : -1;
+                // البداية: إذا كان السعر فوق الخط السفلي = صاعد، تحت الخط العلوي = هابط
+                currentTrend = close > finalLowerBand ? 1 : -1;
             } else {
                 const prevTrend = trend[trend.length - 1];
-                if (prevTrend === 1 && close < finalLowerBand) {
-                    currentTrend = -1; // تغيير إلى اتجاه هابط
-                } else if (prevTrend === -1 && close > finalUpperBand) {
-                    currentTrend = 1; // تغيير إلى اتجاه صاعد
-                } else {
-                    currentTrend = prevTrend; // الحفاظ على الاتجاه السابق
+                
+                if (prevTrend === 1) { // كان صاعد
+                    // يبقى صاعد ما لم يكسر الخط السفلي للأسفل
+                    currentTrend = close > finalLowerBand ? 1 : -1;
+                } else { // كان هابط
+                    // يبقى هابط ما لم يكسر الخط العلوي للأعلى
+                    currentTrend = close < finalUpperBand ? -1 : 1;
                 }
             }
             
@@ -375,13 +380,19 @@ calculateCurrentProfitLoss(signal) {
             if (i > this.atrPeriod) {
                 const prevTrend = trend[trend.length - 2];
                 if (currentTrend !== prevTrend) {
+                    // المنطق الصحيح للإشارات
+                    const signalType = currentTrend === 1 ? 'buy' : 'sell';
+                    const trendDirection = currentTrend === 1 ? 'صاعد' : 'هابط';
+                    
                     signals.push({
                         index: i,
-                        type: currentTrend === 1 ? 'buy' : 'sell',
+                        type: signalType,
                         price: close,
                         atr: currentATR,
                         timestamp: candles[i][0],
-                        trend: currentTrend === 1 ? 'صاعد' : 'هابط'
+                        trend: trendDirection,
+                        upperBand: finalUpperBand,
+                        lowerBand: finalLowerBand
                     });
                 }
             }
