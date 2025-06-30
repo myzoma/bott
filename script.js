@@ -310,7 +310,7 @@ calculateCurrentProfitLoss(signal) {
         }
     }
 
-  calculateUTBot(candles) {
+calculateUTBot(candles) {
     try {
         const signals = [];
         const atr = this.calculateATR(candles, this.atrPeriod);
