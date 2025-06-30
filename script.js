@@ -310,7 +310,7 @@ calculateCurrentProfitLoss(signal) {
         }
     }
 
-    calculateUTBot(candles) {
+  calculateUTBot(candles) {
     try {
         const signals = [];
         const atr = this.calculateATR(candles, this.atrPeriod);
@@ -321,8 +321,6 @@ calculateCurrentProfitLoss(signal) {
         
         for (let i = this.atrPeriod; i < candles.length; i++) {
             const close = candles[i][4];
-            const high = candles[i][2];
-            const low = candles[i][3];
             const currentATR = atr[i - this.atrPeriod];
             
             // حساب خطوط الاتجاه
@@ -333,41 +331,46 @@ calculateCurrentProfitLoss(signal) {
             const prevUpTrend = upTrend[upTrend.length - 1] || basicLowerBand;
             const prevDownTrend = downTrend[downTrend.length - 1] || basicUpperBand;
             const prevTrend = trend[trend.length - 1] || 0;
+            const prevClose = candles[i-1] ? candles[i-1][4] : close;
             
             // تحديث خطوط الاتجاه
-            let currentUpTrend = basicLowerBand > prevUpTrend || candles[i-1][4] < prevUpTrend 
+            let currentUpTrend = basicLowerBand > prevUpTrend || prevClose < prevUpTrend 
                 ? basicLowerBand : prevUpTrend;
-            let currentDownTrend = basicUpperBand < prevDownTrend || candles[i-1][4] > prevDownTrend 
+            let currentDownTrend = basicUpperBand < prevDownTrend || prevClose > prevDownTrend 
                 ? basicUpperBand : prevDownTrend;
             
-            // تحديد الاتجاه الحالي - منطق محسن ✅
+            // تحديد الاتجاه الحالي - المنطق المُصحح ✅
             let currentTrend;
-            if (prevTrend === 1 && close <= currentUpTrend) {
-                currentTrend = -1; // تغيير من صاعد إلى هابط
-            } else if (prevTrend === -1 && close >= currentDownTrend) {
-                currentTrend = 1; // تغيير من هابط إلى صاعد
+            
+            if (prevTrend === -1 && close >= currentDownTrend) {
+                currentTrend = 1; // تغيير من هابط إلى صاعد = إشارة شراء
+            } else if (prevTrend === 1 && close <= currentUpTrend) {
+                currentTrend = -1; // تغيير من صاعد إلى هابط = إشارة بيع
             } else {
                 currentTrend = prevTrend; // الحفاظ على الاتجاه الحالي
             }
             
-            // إذا كان أول حساب، حدد الاتجاه بناءً على الموضع
+            // إذا كان أول حساب
             if (prevTrend === 0) {
-                currentTrend = close > currentUpTrend ? 1 : -1;
+                currentTrend = close > (currentUpTrend + currentDownTrend) / 2 ? 1 : -1;
             }
             
             upTrend.push(currentUpTrend);
             downTrend.push(currentDownTrend);
             trend.push(currentTrend);
             
-            // اكتشاف تغيير الاتجاه - محسن ✅
+            // اكتشاف تغيير الاتجاه - المنطق المُصحح ✅
             if (currentTrend !== prevTrend && prevTrend !== 0) {
+                const signalType = currentTrend === 1 ? 'buy' : 'sell';
+                const trendDirection = currentTrend === 1 ? 'صاعد' : 'هابط';
+                
                 signals.push({
                     index: i,
-                    type: currentTrend === 1 ? 'buy' : 'sell',
+                    type: signalType,
                     price: close,
                     atr: currentATR,
                     timestamp: candles[i][0],
-                    trend: currentTrend === 1 ? 'صاعد' : 'هابط' // الاتجاه الصحيح!
+                    trend: trendDirection
                 });
             }
         }
