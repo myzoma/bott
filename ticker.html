@@ -2,42 +2,20 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>شريط الأخبار</title>
+  <title>أخبار العملات الرقمية</title>
   <style>
-    #newsContent {
-      white-space: nowrap;
-      overflow: hidden;
-      background: #222;
-      color: #fff;
-      font-size: 18px;
-      padding: 10px 0;
-      direction: rtl;
-      width: 100%;
-    }
-    .news-item {
-      display: inline-block;
-      margin: 0 40px;
-      cursor: pointer;
-    }
-    @keyframes tickerMove {
-      0% { transform: translateX(100%);}
-      100% { transform: translateX(-100%);}
-    }
-    #newsContent {
-      animation: tickerMove 60s linear infinite;
-    }
+    body { font-family: Arial, sans-serif; background: #fafbfc; direction: rtl; }
+    .news-list { max-width: 700px; margin: 40px auto; padding: 0; list-style: none; }
+    .news-item { background: #fff; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 8px #0001; padding: 18px; }
+    .news-title { font-size: 1.2em; margin-bottom: 6px; color: #222; }
+    .news-meta { font-size: 0.9em; color: #888; margin-bottom: 6px; }
+    .news-link { color: #007bff; text-decoration: none; }
+    .news-summary { margin-bottom: 8px; color: #444; }
   </style>
 </head>
 <body>
-  <div id="newsContent">جاري تحميل الأخبار...</div>
-  <script src="news-script.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      // فقط الشريط الإخباري مطلوب هنا
-      const app = new EnhancedCryptoNews();
-      await app.loadRealNews();
-      // الشريط يتم تحديثه تلقائياً من داخل الكلاس
-    });
-  </script>
+  <h2 style="text-align:center;">آخر أخبار العملات الرقمية</h2>
+  <ul id="news" class="news-list"></ul>
+  <script src="crypto-news.js"></script>
 </body>
 </html>
