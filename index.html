@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Smart Hunter</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- إضافة CSS الخاص بأيقونات العملات -->
+    <link rel="stylesheet" href="modules/coin-icons/coin-icons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="icon" type="image/x-icon" href="image/favicon.ico">
-     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="image/favicon.ico">     
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -37,6 +39,35 @@
             </div>
         </header>
 
+        <!-- إضافة قسم أيقونات العملات -->
+        <div class="coins-preview-section">
+            <div class="coins-preview-container">
+                <!-- عملات الشراء -->
+                <div class="coins-preview buy-preview">
+                    <div class="preview-header">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>عملات الشراء</span>
+                    </div>
+                    <div class="coins-icons" id="buyCoinsIcons">
+                        <span class="no-signals">لا توجد إشارات</span>
+                    </div>
+                    <span class="count-badge" id="buyCount">0</span>
+                </div>
+                
+                <!-- عملات البيع -->
+                <div class="coins-preview sell-preview">
+                    <div class="preview-header">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>عملات البيع</span>
+                    </div>
+                    <div class="coins-icons" id="sellCoinsIcons">
+                        <span class="no-signals">لا توجد إشارات</span>
+                    </div>
+                    <span class="count-badge" id="sellCount">0</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Control Panel -->
         <div class="control-panel">
             <div class="controls-section">
@@ -58,7 +89,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="settings-section">
                 <div class="settings-group">
                     <label>
@@ -131,7 +161,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Sell Signals -->
             <div class="signals-section sell-section">
                 <div class="section-header sell-header">
@@ -176,6 +205,77 @@
         </footer>
     </div>
 
+    <!-- تحميل الملفات بالترتيب الصحيح -->
+    <script src="modules/coin-icons/coins-config.js"></script>
+    <script src="modules/coin-icons/coin-icons.js"></script>
     <script src="script.js"></script>
+    
+    <!-- تشغيل وحدة أيقونات العملات -->
+    <script>
+        let coinIconsManager;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Initializing Coin Icons Manager...');
+            
+            // إنشاء مدير الأيقونات
+            coinIconsManager = new CoinIconsManager();
+            
+            // ربط مع مدير الإشارات الموجود
+            const connectToSignals = () => {
+                if (window.signalManager || window.signals) {
+                    const manager = window.signalManager || window.signals;
+                    coinIconsManager.connectToSignalManager(manager);
+                    coinIconsManager.startRandomAnimation();
+                    console.log('✅ Connected to Signal Manager');
+                    return true;
+                }
+                return false;
+            };
+            
+            // محاولة الاتصال فوراً
+            if (!connectToSignals()) {
+                // انتظار تحميل مدير الإشارات
+                const checkInterval = setInterval(() => {
+                    if (connectToSignals()) {
+                        clearInterval(checkInterval);
+                    }
+                }, 500);
+                
+                // إيقاف المحاولة بعد 10 ثواني
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    console.log('⚠️ Signal Manager not found, running in demo mode');
+                    addDemoSignals();
+                }, 10000);
+            }
+            
+            // جعله متاح عالمياً
+            window.coinIconsManager = coinIconsManager;
+        });
+        
+        // إضافة إشارات تجريبية للعرض
+        function addDemoSignals() {
+            const demoSignals = {
+                buy: [
+                    { symbol: 'BTC/USDT', price: 45000, time: new Date() },
+                    { symbol: 'ETH/USDT', price: 3000, time: new Date() },
+                    { symbol: 'BNB/USDT', price: 400, time: new Date() },
+                    { symbol: 'ADA/USDT', price: 1.2, time: new Date() },
+                    { symbol: 'SOL/USDT', price: 100, time: new Date() }
+                ],
+                sell: [
+                    { symbol: 'DOT/USDT', price: 25, time: new Date() },
+                    { symbol: 'LINK/USDT', price: 15, time: new Date() },
+                    { symbol: 'MATIC/USDT', price: 0.8, time: new Date() }
+                ]
+            };
+            
+            coinIconsManager.signals = demoSignals;
+            coinIconsManager.updateCoinsIcons();
+            coinIconsManager.startRandomAnimation();
+            
+            console.log('🎭 Demo signals loaded');
+        }
+    </script>
 </body>
 </html>
