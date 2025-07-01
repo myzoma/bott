@@ -475,11 +475,23 @@ body {
 }
 
 .buy-header {
-    background: linear-gradient(135deg, var(--success-color), rgba(0, 200, 83, 0.8));
+    background: 
+        url('https://cryptologos.cc/logos/bitcoin-btc-logo.png') no-repeat 10px center,
+        url('https://cryptologos.cc/logos/ethereum-eth-logo.png') no-repeat 50px center,
+        url('https://cryptologos.cc/logos/bnb-bnb-logo.png') no-repeat 90px center,
+        linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+    background-size: 24px 24px, 24px 24px, 24px 24px, cover;
+    padding-left: 130px; /* مساحة للشعارات */
 }
 
 .sell-header {
-    background: linear-gradient(135deg, var(--danger-color), rgba(255, 53, 71, 0.8));
+    background: 
+        url('https://cryptologos.cc/logos/cardano-ada-logo.png') no-repeat 10px center,
+        url('https://cryptologos.cc/logos/solana-sol-logo.png') no-repeat 50px center,
+        url('https://cryptologos.cc/logos/xrp-xrp-logo.png') no-repeat 90px center,
+        linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+    background-size: 24px 24px, 24px 24px, 24px 24px, cover;
+    padding-left: 130px; /* مساحة للشعارات */
 }
 
 .section-header h2 {
