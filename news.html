@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ويدجت أخبار العملات الرقمية</title>
+    <style>
+        .crypto-news-widget {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin: 20px 0;
+            max-width: 100%;
+        }
+
+        .widget-header {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .widget-title {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .widget-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .widget-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .widget-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .news-ticker-widget {
+            height: 60px;
+            overflow: hidden;
+            background: white;
+            position: relative;
+        }
+
+        .ticker-content {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            white-space: nowrap;
+            animation: tickerScroll 100s linear infinite;
+            padding: 0 20px;
+        }
+
+        .ticker-content.paused {
+            animation-play-state: paused;
+        }
+
+        .ticker-item {
+            margin-left: 50px;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .ticker-item:hover {
+            color: #FF6B35;
+        }
+
+        .source-tag {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .time-tag {
+            background: #f0f0f0;
+            color: #666;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-left: 6px;
+            font-size: 9px;
+        }
+
+        @keyframes tickerScroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .widget-footer {
+            background: #f8f9fa;
+            padding: 8px 20px;
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+        }
+
+        .loading-widget {
+            color: #FF6B35;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* أحجام مختلفة للويدجت */
+        .widget-small {
+            max-width: 400px;
+        }
+
+        .widget-medium {
+            max-width: 600px;
+        }
+
+        .widget-large {
+            max-width: 100%;
+        }
+
+        .widget-compact .news-ticker-widget {
+            height: 40px;
+        }
+
+        .widget-compact .ticker-item {
+            font-size: 12px;
+            margin-left: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .widget-header {
+                padding: 10px 15px;
+            }
+            
+            .widget-title {
+                font-size: 16px;
+            }
+            
+            .ticker-item {
+                font-size: 12px;
+                margin-left: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="cryptoNewsWidget" class="crypto-news-widget widget-medium">
+        <div class="widget-header">
+            <div class="widget-title">
+                <span>📈</span>
+                <span>أخبار العملات الرقمية</span>
+            </div>
+            <div class="widget-controls">
+                <button class="widget-btn" id="widgetPause" title="إيقاف/تشغيل">⏸️</button>
+                <button class="widget-btn" id="widgetRefresh" title="تحديث">🔄</button>
+                <button class="widget-btn" id="widgetExpand" title="عرض كامل">⛶</button>
+            </div>
+        </div>
+        <div class="news-ticker-widget">
+            <div class="ticker-content" id="widgetTickerContent">
+                <span class="loading-widget">جاري تحميل الأخبار...</span>
+            </div>
+        </div>
+        <div class="widget-footer">
+            <span id="widgetStatus">آخر تحديث: جاري التحميل...</span>
+        </div>
+    </div>
+
+    <script>
+        class CryptoNewsWidget {
+            constructor(containerId, options = {}) {
+                this.container = document.getElementById(containerId);
+                this.options = {
+                    size: options.size || 'medium', // small, medium, large
+                    compact: options.compact || false,
+                    autoRefresh: options.autoRefresh !== false,
+                    refreshInterval: options.refreshInterval || 300000, // 5 دقائق
+                    maxItems: options.maxItems || 10,
+                    sources: options.sources || ['all'],
+                    ...options
+                };
+                
+                this.isPaused = false;
+                this.news = [];
+                this.refreshTimer = null;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupWidget();
+                this.loadNews();
+                this.setupEventListeners();
+                
+                if (this.options.autoRefresh) {
+                    this.startAutoRefresh();
+                }
+            }
+
+            setupWidget() {
+                // تطبيق الحجم المطلوب
+                this.container.className = `crypto-news-widget widget-${this.options.size}`;
+                
+                if (this.options.compact) {
+                    this.container.classList.add('widget-compact');
+                }
+            }
+
+            async loadNews() {
+                try {
+                    this.showLoading();
+                    
+                    // جلب الأخبار من مصادر متعددة
+                    const newsData = await this.fetchNewsData();
+                    
+                    if (newsData && newsData.length > 0) {
+                        this.news = newsData.slice(0, this.options.maxItems);
+                        this.updateTicker();
+                        this.updateStatus();
+                    } else {
+                        this.showError('لا توجد أخبار متاحة');
+                    }
+                    
+                } catch (error) {
+                    console.error('خطأ في تحميل الأخبار:', error);
+                    this.showError('فشل في تحميل الأخبار');
+                }
+            }
+
+            async fetchNewsData() {
+                // محاولة جلب الأخبار من مصادر متعددة
+                const sources = [
+                    () => this.fetchFromCoinGecko(),
+                    () => this.fetchFromCryptoCompare(),
+                    () => this.fetchFromRSSProxy()
+                ];
+
+                for (const source of sources) {
+                    try {
+                        const data = await source();
+                        if (data && data.length > 0) {
+                            return data;
+                        }
+                    } catch (error) {
+                        console.error('خطأ في مصدر الأخبار:', error);
+                        continue;
+                    }
+                }
+
+                // إذا فشلت جميع المصادر، استخدم البيانات الاحتياطية
+                return this.getFallbackNews();
+            }
+
+            async fetchFromCoinGecko() {
+                const response = await fetch('https://api.coingecko.com/api/v3/news');
+                const data = await response.json();
+                
+                return data.data.slice(0, 15).map(item => ({
+                    title: item.title,
+                    source: 'CoinGecko',
+                    publishedAt: item.created_at,
+                    url: item.url
+                }));
+            }
+
+            async fetchFromCryptoCompare() {
+                const response = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
+                const data = await response.json();
+                
+                if (data.Response === 'Success') {
+                    return data.Data.slice(0, 15).map(item => ({
+                        title: item.title,
+                        source: item.source_info.name,
+                        publishedAt: new Date(item.published_on * 1000).toISOString(),
+                        url: item.url
+                    }));
+                }
+                
+                return [];
+            }
+
+            async fetchFromRSSProxy() {
+                // يمكن استخدام proxy.php إذا كان متاحاً
+                try {
+                    const response = await fetch('proxy.php?url=https://cointelegraph.com/rss&source=CoinTelegraph');
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        return data.items.map(item => ({
+                            title: item.title,
+                            source: item.source,
+                            publishedAt: item.pubDate,
+                            url: item.link
+                        }));
+                    }
+                } catch (error) {
+                    console.error('خطأ في RSS Proxy:', error);
+                }
+                
+                return [];
+            }
+
+            getFallbackNews() {
+                return [
+                    {
+                        title: "Bitcoin يشهد تقلبات في الأسعار وسط ترقب السوق",
+                        source: "تحديث محلي",
+                        publishedAt: new Date().toISOString(),
+                        url: "#"
+                    },
+                    {
+                        title: "Ethereum تواصل التطوير لتحسين الأداء والكفاءة",
+                        source: "تحديث محلي",
+                        publishedAt: new Date(Date.now() - 3600000).toISOString(),
+                        url: "#"
+                    },
+                    {
+                        title: "نمو مستمر في اعتماد العملات الرقمية عالمياً",
+                        source: "تحديث محلي",
+                        publishedAt: new Date(Date.now() - 7200000).toISOString(),
+                        url: "#"
+                    }
+                ];
+            }
+
+            updateTicker() {
+                const tickerContent = document.getElementById('widgetTickerContent');
+                
+                const tickerItems = this.news.map(item => {
+                    const timeAgo = this.getTimeAgo(item.publishedAt);
+                    return `
+                        <span class="ticker-item" onclick="window.open('${item.url}', '_blank')" title="${item.title}">
+                            ${item.title}
+                            <span class="source-tag">${item.source}</span>
+                            <span class="time-tag">${timeAgo}</span>
+                        </span>
+                    `;
+                }).join('');
+
+                tickerContent.innerHTML = tickerItems;
+                
+                // إعادة تشغيل الأنيميشن
+                tickerContent.style.animation = 'none';
+                tickerContent.offsetHeight;
+                tickerContent.style.animation = null;
+            }
+
+            updateStatus() {
+                const statusElement = document.getElementById('widgetStatus');
+                const now = new Date().toLocaleString('ar-SA');
+                statusElement.textContent = `آخر تحديث: ${now} | ${this.news.length} خبر`;
+            }
+
+            setupEventListeners() {
+                const pauseBtn = document.getElementById('widgetPause');
+                const refreshBtn = document.getElementById('widgetRefresh');
+                const expandBtn = document.getElementById('widgetExpand');
+                const tickerContent = document.getElementById('widgetTickerContent');
+
+                pauseBtn.addEventListener('click', () => {
+                    this.togglePause();
+                });
+
+                refreshBtn.addEventListener('click', () => {
+                    this.loadNews();
+                });
+
+                expandBtn.addEventListener('click', () => {
+                    this.openFullView();
+                });
+
+                // إيقاف التمرير عند hover
+                tickerContent.addEventListener('mouseenter', () => {
+                    if (!this.isPaused) {
+                        tickerContent.style.animationPlayState = 'paused';
+                    }
+                });
+
+                tickerContent.addEventListener('mouseleave', () => {
+                    if (!this.isPaused) {
+                        tickerContent.style.animationPlayState = 'running';
+                    }
+                });
+            }
+
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                const tickerContent = document.getElementById('widgetTickerContent');
+                const pauseBtn = document.getElementById('widgetPause');
+
+                if (this.isPaused) {
+                    tickerContent.classList.add('paused');
+                    pauseBtn.textContent = '▶️';
+                } else {
+                    tickerContent.classList.remove('paused');
+                    pauseBtn.textContent = '⏸️';
+                }
+            }
+
+            openFullView() {
+                // فتح الصفحة الكاملة للأخبار
+                window.open('index.html', '_blank');
+            }
+
+            startAutoRefresh() {
+                this.refreshTimer = setInterval(() => {
+                    if (!this.isPaused) {
+                        this.loadNews();
+                    }
+                }, this.options.refreshInterval);
+            }
+
+            stopAutoRefresh() {
+                if (this.refreshTimer) {
+                    clearInterval(this.refreshTimer);
+                    this.refreshTimer = null;
+                }
+            }
+
+            showLoading() {
+                const tickerContent = document.getElementById('widgetTickerContent');
+                tickerContent.innerHTML = '<span class="loading-widget">🔄 جاري التحميل...</span>';
+            }
+
+                      showError(message) {
+                const tickerContent = document.getElementById('widgetTickerContent');
+                tickerContent.innerHTML = `<span class="loading-widget" style="color: #dc3545;">❌ ${message}</span>`;
+            }
+
+            getTimeAgo(dateString) {
+                const now = new Date();
+                const publishDate = new Date(dateString);
+                const diffInMinutes = Math.floor((now - publishDate) / (1000 * 60));
+                
+                if (diffInMinutes < 1) return 'الآن';
+                if (diffInMinutes < 60) return `${diffInMinutes}د`;
+                
+                const diffInHours = Math.floor(diffInMinutes / 60);
+                if (diffInHours < 24) return `${diffInHours}س`;
+                
+                const diffInDays = Math.floor(diffInHours / 24);
+                return `${diffInDays}ي`;
+            }
+
+            // تنظيف الموارد
+            destroy() {
+                this.stopAutoRefresh();
+            }
+        }
+
+        // تشغيل الويدجت
+        document.addEventListener('DOMContentLoaded', () => {
+            window.cryptoWidget = new CryptoNewsWidget('cryptoNewsWidget', {
+                size: 'medium',
+                compact: false,
+                autoRefresh: true,
+                refreshInterval: 300000, // 5 دقائق
+                maxItems: 12
+            });
+        });
+
+        // تنظيف عند إغلاق الصفحة
+        window.addEventListener('beforeunload', () => {
+            if (window.cryptoWidget) {
+                window.cryptoWidget.destroy();
+            }
+        });
+    </script>
+</body>
+</html>
