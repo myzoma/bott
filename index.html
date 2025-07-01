@@ -99,70 +99,71 @@
             </div>
         </div>
 
-        <!-- Signals Display -->
-        <div class="signals-container">
-            <!-- Buy Signals -->
-            <div class="signals-section buy-section">
-                <div class="section-header buy-header">
-                    <h3>
-                        <i class="fas fa-arrow-up"></i>
-                        إشارات الشراء
-                        <span class="count-badge">0</span>
-                    </h3>
-                    <div class="section-actions">
-                        <button class="btn-action clear-signals" data-type="buy">
-                            <i class="fas fa-trash"></i>
-                            مسح الكل
-                        </button>
-                        <button class="btn-action export-signals" data-type="buy">
-                            <i class="fas fa-download"></i>
-                            تصدير
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="signals-list" id="buySignals">
-                    <div class="no-signals">
-                        <div class="no-signals-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <p>لا توجد إشارات شراء حالياً</p>
-                        <small>سيتم عرض الإشارات الجديدة هنا عند اكتشافها</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sell Signals -->
-            <div class="signals-section sell-section">
-                <div class="section-header sell-header">
-                    <h3>
-                        <i class="fas fa-arrow-down"></i>
-                        إشارات البيع
-                        <span class="count-badge">0</span>
-                    </h3>
-                    <div class="section-actions">
-                        <button class="btn-action clear-signals" data-type="sell">
-                            <i class="fas fa-trash"></i>
-                            مسح الكل
-                        </button>
-                        <button class="btn-action export-signals" data-type="sell">
-                            <i class="fas fa-download"></i>
-                            تصدير
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="signals-list" id="sellSignals">
-                    <div class="no-signals">
-                        <div class="no-signals-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <p>لا توجد إشارات بيع حالياً</p>
-                        <small>سيتم عرض الإشارات الجديدة هنا عند اكتشافها</small>
-                    </div>
-                </div>
-            </div>
+       <!-- Buy Signals -->
+<div class="signals-section buy-section">
+    <div class="section-header buy-header">
+        <h3>
+            <i class="fas fa-arrow-up"></i>
+            إشارات الشراء
+            <span class="count-badge">0</span>
+            <!-- إضافة شعارات العملات هنا -->
+            <div class="header-crypto-logos" id="buyCryptoLogos"></div>
+        </h3>
+        <div class="section-actions">
+            <button class="btn-action clear-signals" data-type="buy">
+                <i class="fas fa-trash"></i>
+                مسح الكل
+            </button>
+            <button class="btn-action export-signals" data-type="buy">
+                <i class="fas fa-download"></i>
+                تصدير
+            </button>
         </div>
+    </div>
+    
+    <div class="signals-list" id="buySignals">
+        <div class="no-signals">
+            <div class="no-signals-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <p>لا توجد إشارات شراء حالياً</p>
+            <small>سيتم عرض الإشارات الجديدة هنا عند اكتشافها</small>
+        </div>
+    </div>
+</div>
+
+<!-- Sell Signals -->
+<div class="signals-section sell-section">
+    <div class="section-header sell-header">
+        <h3>
+            <i class="fas fa-arrow-down"></i>
+            إشارات البيع
+            <span class="count-badge">0</span>
+            <!-- إضافة شعارات العملات هنا -->
+            <div class="header-crypto-logos" id="sellCryptoLogos"></div>
+        </h3>
+        <div class="section-actions">
+            <button class="btn-action clear-signals" data-type="sell">
+                <i class="fas fa-trash"></i>
+                مسح الكل
+            </button>
+            <button class="btn-action export-signals" data-type="sell">
+                <i class="fas fa-download"></i>
+                تصدير
+            </button>
+        </div>
+    </div>
+    
+    <div class="signals-list" id="sellSignals">
+        <div class="no-signals">
+            <div class="no-signals-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <p>لا توجد إشارات بيع حالياً</p>
+            <small>سيتم عرض الإشارات الجديدة هنا عند اكتشافها</small>
+        </div>
+    </div>
+</div>
 
         <!-- Footer -->
         <footer class="footer">
