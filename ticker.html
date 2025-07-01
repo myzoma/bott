@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <title>شريط الأخبار</title>
   <style>
-    body { margin: 0; background: #fff; }
-    #newsTicker {
+    #newsContent {
       white-space: nowrap;
       overflow: hidden;
       background: #222;
@@ -18,34 +17,26 @@
     .news-item {
       display: inline-block;
       margin: 0 40px;
+      cursor: pointer;
     }
     @keyframes tickerMove {
       0% { transform: translateX(100%);}
       100% { transform: translateX(-100%);}
     }
-    #tickerInner {
-      display: inline-block;
+    #newsContent {
       animation: tickerMove 60s linear infinite;
     }
   </style>
 </head>
 <body>
-  <div id="newsTicker"><span id="tickerInner">جاري تحميل الأخبار...</span></div>
+  <div id="newsContent">جاري تحميل الأخبار...</div>
   <script src="news-script.js"></script>
   <script>
-    // استخرج الأخبار من الكلاس EnhancedCryptoNews واستخدمها في الشريط
     document.addEventListener('DOMContentLoaded', async () => {
+      // فقط الشريط الإخباري مطلوب هنا
       const app = new EnhancedCryptoNews();
-      // انتظر تحميل الأخبار
       await app.loadRealNews();
-      const items = app.allNews.slice(0, 15).map(news =>
-        `<span class="news-item" onclick="window.open('${news.url}', '_blank')" title="${news.summary}">${news.title}</span>`
-      ).join('');
-      document.getElementById('tickerInner').innerHTML = items;
-      // أعد تشغيل الأنيميشن بحال تحديث الأخبار
-      document.getElementById('tickerInner').style.animation = 'none';
-      void document.getElementById('tickerInner').offsetHeight;
-      document.getElementById('tickerInner').style.animation = null;
+      // الشريط يتم تحديثه تلقائياً من داخل الكلاس
     });
   </script>
 </body>
