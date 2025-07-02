@@ -3,7 +3,7 @@ const CACHE_NAME = 'crypto-news-v1';
 const urlsToCache = [
     './',
     './index.html',
-    './css/style.css',
+    '.style.css',
     './app.js',
     './newsService.js',
     './config.js',
