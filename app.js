@@ -176,10 +176,10 @@ const CACHE_NAME = 'crypto-news-v1';
 const urlsToCache = [
     '/',
     '/index.html',
-    '/css/style.css',
-    '/js/app.js',
-    '/js/newsService.js',
-    '/js/config.js',
+    'css/style.css',
+    'app.js',
+    'newsService.js',
+    'config.js',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
